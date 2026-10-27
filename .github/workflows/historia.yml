@@ -1,0 +1,29 @@
+name: Zbuduj historie bossow
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: zapis-repo
+
+jobs:
+  zbuduj:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node zbuduj-historie.js
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add historia
+          git diff --cached --quiet || git commit -m "historia bossow $(date -u +%F)"
+          git pull --rebase -q || true
+          git push
