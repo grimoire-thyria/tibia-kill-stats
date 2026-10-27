@@ -11,6 +11,7 @@
 // ============================================================
 const fs = require('fs');
 const path = require('path');
+const H = require('./historia.js');   // dopisywanie do historia/<swiat>.json (2.99.30)
 
 const API = 'https://api.tibiadata.com/v4';
 const DZIS = new Date().toISOString().slice(0, 10);
@@ -27,6 +28,8 @@ async function json(url) {
     }
     return null;
 }
+
+const szukaj = H.dopasowanie();
 
 async function main() {
     const lista = await json(API + '/worlds');
@@ -58,6 +61,12 @@ async function main() {
         fs.mkdirSync(katalog, { recursive: true });
         fs.writeFileSync(plik, JSON.stringify(d));
         zapisane++;
+        // Historia bossow: dopisujemy dzisiejszy plik.
+        try {
+            const h = H.wczytaj(swiat.toLowerCase());
+            H.dopisz(h, d, DZIS, szukaj);
+            H.zapisz(h);
+        } catch (e) { console.log('historia ' + swiat + ': ' + e.message); }
     }
     console.log(DZIS + ': zapisane ' + zapisane + ', juz byly ' + juzBylo
         + ', nieswieze ' + nieswieze + ', bledy ' + bledy + ' (swiatow ' + swiaty.length + ')');
