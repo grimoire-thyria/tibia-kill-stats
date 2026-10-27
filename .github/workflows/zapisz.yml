@@ -11,6 +11,9 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: zapis-repo
+
 jobs:
   zapisz:
     runs-on: ubuntu-latest
@@ -24,6 +27,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
-          git add data
+          git add data historia
           git diff --cached --quiet || git commit -m "statystyki $(date -u +%F)"
+          git pull --rebase -q || true
           git push
