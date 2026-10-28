@@ -15,7 +15,6 @@ const H = require('./historia.js');   // dopisywanie do historia/<swiat>.json (2
 
 const API = 'https://api.tibiadata.com/v4';
 const DZIS = new Date().toISOString().slice(0, 10);
-const WCZORAJ = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
 const spij = (ms) => new Promise(r => setTimeout(r, ms));
 
 async function json(url) {
@@ -30,6 +29,13 @@ async function json(url) {
 }
 
 const szukaj = H.dopasowanie();
+
+// Najnowszy plik swiata sprzed podanej daty albo null.
+function najnowszyPlik(katalog, przed) {
+    if (!fs.existsSync(katalog)) return null;
+    const l = fs.readdirSync(katalog).filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f) && f.slice(0, 10) < przed).sort();
+    return l.length ? path.join(katalog, l[l.length - 1]) : null;
+}
 
 async function main() {
     const lista = await json(API + '/worlds');
@@ -47,15 +53,18 @@ async function main() {
         const wpisy = d && d.killstatistics && d.killstatistics.entries;
         if (!Array.isArray(wpisy) || !wpisy.length) { bledy++; continue; }
 
-        // NIESWIEZE: te same liczby co we wczorajszym pliku znacza, ze
-        // tibia.com albo TibiaData jeszcze nie przeliczyly doby. Nie
+        // NIESWIEZE: te same liczby co w NAJNOWSZYM zapisanym pliku znacza,
+        // ze tibia.com albo TibiaData jeszcze nie przeliczyly doby. Nie
         // zapisujemy, druga proba (pozniej w ciagu dnia) to zalatwi.
-        const wczoraj = path.join(katalog, WCZORAJ + '.json');
-        if (fs.existsSync(wczoraj)) {
+        // Najnowszy, nie wczorajszy (audyt 28.10): po dniu przerwy
+        // wczorajszego pliku nie ma i stare liczby szly pod dzisiejsza data,
+        // czyli ubicia przesuwaly sie o dobe.
+        const poprzedni = najnowszyPlik(katalog, DZIS);
+        if (poprzedni) {
             try {
-                const stary = JSON.parse(fs.readFileSync(wczoraj, 'utf8'));
+                const stary = JSON.parse(fs.readFileSync(poprzedni, 'utf8'));
                 if (JSON.stringify(stary.killstatistics.entries) === JSON.stringify(wpisy)) { nieswieze++; continue; }
-            } catch (e) { /* uszkodzony wczorajszy plik: zapisujemy dzisiejszy */ }
+            } catch (e) { /* uszkodzony plik: zapisujemy dzisiejszy */ }
         }
 
         fs.mkdirSync(katalog, { recursive: true });
