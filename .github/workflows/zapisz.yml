@@ -2,10 +2,12 @@ name: Zapisz statystyki zabic
 
 on:
   schedule:
-    # UTC. Statystyki przeliczaja sie w nocy czasu polskiego; druga proba
-    # dopisuje swiaty, ktore za pierwszym razem byly jeszcze nieswieze.
-    - cron: '20 4 * * *'
-    - cron: '20 9 * * *'
+    # UTC. Co godzine od 2:20 do 9:20 UTC (zima 3:20-10:20, lato 4:20-11:20
+    # czasu polskiego). Swiaty, ktore juz maja dzisiejszy plik, sa pomijane,
+    # a nieswieze (te same liczby co wczoraj) nie sa zapisywane, wiec kazda
+    # kolejna proba dopisuje tylko to, co tibia.com zdazyl przeliczyc.
+    # (2.99.148, autor: ubicia przychodzily dopiero ok. 11.)
+    - cron: '20 2-9 * * *'
   workflow_dispatch:
 
 permissions:
